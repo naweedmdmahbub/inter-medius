@@ -17,7 +17,13 @@ class ProductController extends Controller
      */
     public function index()
     {
-        return view('products.index');
+        $products = Product::with('productVariantPrices.productVariantOne',
+                                    'productVariantPrices.productVariantTwo',
+                                    'productVariantPrices.productVariantThree')
+                            ->paginate(2);
+        $total = Product::count();
+        // dd($products);
+        return view('products.index', compact('products', 'total'));
     }
 
     /**
