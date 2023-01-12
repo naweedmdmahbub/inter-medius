@@ -20,7 +20,7 @@
                             @foreach ($distincts as $key => $value)
                                 <option disabled value="">{{$key}}</option>                    
                                 @foreach ($value as $item)
-                                    <option value="{{$item}}"> -- {{$item}}</option>                    
+                                    <option value="{{$item}}"> --   {{$item}}</option>                    
                                 @endforeach
                             @endforeach
                     </select>
@@ -74,7 +74,6 @@
                                 @endphp --}}
                                 @foreach ($product->productVariantPrices as $productVariantPrice)
                                 <dl class="row mb-0" style="height: 80px; overflow: hidden" id="variant">
-
                                     <dt class="col-sm-3 pb-0">
                                         @if ($productVariantPrice->productVariantTwo)
                                             {{ Str::upper($productVariantPrice->productVariantTwo->variant) }}/
@@ -117,7 +116,6 @@
         <div class="card-footer">
             <div class="row justify-content-between">
                 <div class="col-md-6">
-                    {{-- <p>Showing 1 to 10 out of 100</p> --}}
                 <p>Showing {{ $products->firstItem() }} to {{ $products->lastItem() }} out of  {{$total}}</p>
                 </div>
                 <div class="col-md-6">
