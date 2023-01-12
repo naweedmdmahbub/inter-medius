@@ -8,14 +8,21 @@
 
 
     <div class="card">
-        <form action="" method="get" class="card-header">
+        <form action="{{ route('product.filter')}}" method="post" class="card-header">
+            @csrf
             <div class="form-row justify-content-between">
                 <div class="col-md-2">
                     <input type="text" name="title" placeholder="Product Title" class="form-control">
                 </div>
                 <div class="col-md-2">
-                    <select name="variant" id="" class="form-control">
-
+                    <select name="variant" id="" class="form-control" placeholder="Select a Variant">
+                            <option value="">Selec a Variant</option>
+                            @foreach ($distincts as $key => $value)
+                                <option disabled value="">{{$key}}</option>                    
+                                @foreach ($value as $item)
+                                    <option value="{{$item}}"> -- {{$item}}</option>                    
+                                @endforeach
+                            @endforeach
                     </select>
                 </div>
 

@@ -7,6 +7,7 @@ use App\Models\ProductVariant;
 use App\Models\ProductVariantPrice;
 use App\Models\Variant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ProductController extends Controller
 {
@@ -22,8 +23,25 @@ class ProductController extends Controller
                                     'productVariantPrices.productVariantThree')
                             ->paginate(2);
         $total = Product::count();
-        // dd($products);
-        return view('products.index', compact('products', 'total'));
+        $variants = Variant::with('productVariants')->get();
+
+        $distinctVariants = DB::table('product_variants')
+                        ->select(DB::raw('lower(variant) as variant'),
+                             'product_variants.variant_id', 'variants.title')
+                        ->leftJoin('variants', 'product_variants.variant_id', '=', 'variants.id')
+                        ->get()
+                        ->unique('variant');
+        // $distinctVariants = DB::table('product_variants')->distinct('variant')->pluck('id', 'variant')->flip();
+        $distincts = [];
+        foreach ($distinctVariants as $key => $value) {
+            $distincts[$value->title] = [];
+        }
+        foreach ($distinctVariants as $key => $value) {
+            array_push($distincts[$value->title], $value->variant);
+        }
+        $variants = Variant::with('productVariants')->get();
+        // dd($distinctVariants, $distincts);
+        return view('products.index', compact('products', 'total', 'variants', 'distincts'));
     }
 
     /**
@@ -94,4 +112,11 @@ class ProductController extends Controller
     {
         //
     }
+
+    public function filter(Request $request)
+    {
+        dd($request->all());
+
+    }
+
 }
