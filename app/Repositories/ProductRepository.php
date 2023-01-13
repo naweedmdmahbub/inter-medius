@@ -29,8 +29,6 @@ class ProductRepository implements ProductInterface
     public function createOrUpdateProduct($request, $method, $id = null)
     {
         $input = $request->only('title', 'sku', 'description');
-        // dd($request->all());
-        
         if($method == 'create'){
             $product = Product::create($input);
         } else {
@@ -56,7 +54,6 @@ class ProductRepository implements ProductInterface
                 $input['variant'] = Str::lower($tag);
                 if($method == 'create') ProductVariant::create($input);
             }
-            // isset($variant['id']) ? ProductVariant::where('id', $variant['id'])->update($input) : ProductVariant::create($input);
         }
     }
 
@@ -64,8 +61,6 @@ class ProductRepository implements ProductInterface
     
     public function saveProductVariantPrices($product, $request, $method)
     {
-        // $variants = ProductVariant::where('product_id', $product->id)->get();
-        // dd($request->all(), $variants);
         foreach($request['product_variant_prices'] as $variant_price){
             // dd('variant_price:',$variant_price);
             $variant_names = explode('/', $variant_price['title']);

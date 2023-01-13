@@ -81,8 +81,6 @@ class ProductController extends Controller
             DB::rollBack();
             return redirect()->back()->withErrors(new \Illuminate\Support\MessageBag(['catch_exception'=>$ex->getMessage()]));
         }
-        // dd($request->all());
-
     }
 
 
@@ -98,7 +96,6 @@ class ProductController extends Controller
                                 'productVariantPrices.productVariantTwo',
                                 'productVariantPrices.productVariantThree','productVariants')
                             ->where('id', $product)->first();
-        // dd($structure);
         return new ProductResource($productR);
     }
 
@@ -164,23 +161,26 @@ class ProductController extends Controller
         }
         if($price_from || $price_to){
             if($price_from && $price_from){
-                $query = $query->whereHas('productVariantPrices',function($subquery) use ($price_from, $price_to){
+                // $query = $query->whereHas('productVariantPrices',function($subquery) use ($price_from, $price_to){
+                //     $subquery->whereBetween('price',[$price_from, $price_to]);
+                // });
+                $query = $query->with(['productVariantPrices'=>function($subquery) use ($price_from, $price_to){
                     $subquery->whereBetween('price',[$price_from, $price_to]);
-                });
-            } else if($price_from){
-                $query = $query->whereHas(['productVariantPrices',function($subquery) use ($price_from){
-                    $subquery->where('price','>=', $price_from);
                 }]);
-                // $query = $query->with(['productVariantPrices'=>function($subquery) use ($price_from){
+            } else if($price_from){
+                // $query = $query->whereHas(['productVariantPrices',function($subquery) use ($price_from){
                 //     $subquery->where('price','>=', $price_from);
                 // }]);
-            } else{
-                $query = $query->whereHas(['productVariantPrices'=>function($subquery) use ($price_to){
-                    $subquery->where('price','<=', $price_to);
+                $query = $query->with(['productVariantPrices'=>function($subquery) use ($price_from){
+                    $subquery->where('price','>=', $price_from);
                 }]);
-                // $query = $query->with(['productVariantPrices'=>function($subquery) use ($price_to){
+            } else{
+                // $query = $query->whereHas(['productVariantPrices'=>function($subquery) use ($price_to){
                 //     $subquery->where('price','<=', $price_to);
                 // }]);
+                $query = $query->with(['productVariantPrices'=>function($subquery) use ($price_to){
+                    $subquery->where('price','<=', $price_to);
+                }]);
             }
         }
         if($variant){
@@ -194,12 +194,7 @@ class ProductController extends Controller
                                 });
                     });
         }
-        // $products = $query->paginate(2);
-        $products = $query->with('productVariantPrices.productVariantOne',
-                                'productVariantPrices.productVariantTwo',
-                                'productVariantPrices.productVariantThree')
-                        ->paginate(2);
-                        // ->get();
+        $products = $query->paginate(2);
         // dd($query, $request->all());
         // dd($products);
         $distinctVariants = DB::table('product_variants')
@@ -208,7 +203,6 @@ class ProductController extends Controller
                         ->leftJoin('variants', 'product_variants.variant_id', '=', 'variants.id')
                         ->get()
                         ->unique('variant');
-        // $distinctVariants = DB::table('product_variants')->distinct('variant')->pluck('id', 'variant')->flip();
         $distincts = [];
         foreach ($distinctVariants as $key => $value) {
             $distincts[$value->title] = [];
