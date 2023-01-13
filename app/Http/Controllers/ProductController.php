@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreUpdateProductRequest;
+use App\Http\Resources\ProductResource;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\ProductVariantPrice;
@@ -93,7 +94,12 @@ class ProductController extends Controller
      */
     public function show($product)
     {
-
+        $productR = Product::with('productVariantPrices.productVariantOne',
+                                'productVariantPrices.productVariantTwo',
+                                'productVariantPrices.productVariantThree','productVariants')
+                            ->where('id', $product)->first();
+        // dd($structure);
+        return new ProductResource($productR);
     }
 
     /**
@@ -105,7 +111,8 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         $variants = Variant::all();
-        return view('products.edit', compact('variants'));
+        $mode = 'edit';
+        return view('products.edit', compact('variants', 'mode', 'product'));
     }
 
     /**
@@ -115,9 +122,17 @@ class ProductController extends Controller
      * @param \App\Models\Product $product
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Product $product)
+    public function update(StoreUpdateProductRequest $request, Product $product)
     {
-        //
+        // dd($request->all(), $product);
+        try{
+            DB::beginTransaction();
+            $this->productRepository->createOrUpdateProduct($request, 'update', $product->id);
+            DB::commit();
+        } catch (Exception $ex){
+            DB::rollBack();
+            return redirect()->back()->withErrors(new \Illuminate\Support\MessageBag(['catch_exception'=>$ex->getMessage()]));
+        }
     }
 
     /**

@@ -28,21 +28,24 @@ class ProductRepository implements ProductInterface
 
     public function createOrUpdateProduct($request, $method, $id = null)
     {
-        $input = $request->only('title', 'sku', 'description', );
+        $input = $request->only('title', 'sku', 'description');
         // dd($request->all());
         
         if($method == 'create'){
             $product = Product::create($input);
         } else {
-            $product = Product::find($id);            
+            $product = Product::find($id);
             $product->fill($input)->update();
+            foreach($request['del_variant_prices_ids'] as $del_id){
+                ProductVariantPrice::where('id',$del_id)->delete();
+            }
         }
-        $this->saveProductVariants($product, $request);
-        $this->saveProductVariantPrices($product, $request);
+        $this->saveProductVariants($product, $request, $method);
+        $this->saveProductVariantPrices($product, $request, $method);
     }
 
     
-    public function saveProductVariants($product, $request)
+    public function saveProductVariants($product, $request, $method)
     {
         // dd($request->all());
         foreach($request['product_variant'] as $variant){
@@ -51,7 +54,7 @@ class ProductRepository implements ProductInterface
             foreach($variant['tags'] as $tag){
                 $input['product_id'] = $product->id;
                 $input['variant'] = Str::lower($tag);
-                ProductVariant::create($input);
+                if($method == 'create') ProductVariant::create($input);
             }
             // isset($variant['id']) ? ProductVariant::where('id', $variant['id'])->update($input) : ProductVariant::create($input);
         }
@@ -59,37 +62,41 @@ class ProductRepository implements ProductInterface
 
     
     
-    public function saveProductVariantPrices($product, $request)
+    public function saveProductVariantPrices($product, $request, $method)
     {
-        $variants = ProductVariant::where('product_id', $product->id)->get();
-
+        // $variants = ProductVariant::where('product_id', $product->id)->get();
         // dd($request->all(), $variants);
         foreach($request['product_variant_prices'] as $variant_price){
+            // dd('variant_price:',$variant_price);
             $variant_names = explode('/', $variant_price['title']);
             $input = [];
-            foreach($variant_names as $name){
-                if(isset($name)){
-                    $product_variant = ProductVariant::with('modelVariant')->where('product_id', $product->id)->where('variant', Str::lower($name))->first();
-                    if($product_variant){
-                        // dd($product_variant->modelVariant, $product_variant);
-                        if($product_variant->modelVariant->title == 'Color'){
-                            $input['product_variant_one'] = $product_variant->id;
-                        } else if($product_variant->modelVariant->title == 'Size'){
-                            $input['product_variant_two'] = $product_variant->id;
-                        } else if($product_variant->modelVariant->title == 'Style'){
-                            $input['product_variant_three'] = $product_variant->id;
+            if($method == 'create'){
+                foreach($variant_names as $name){
+                    if(isset($name)){
+                        $product_variant = ProductVariant::with('modelVariant')->where('product_id', $product->id)->where('variant', Str::lower($name))->first();
+                        if($product_variant){
+                            // dd($product_variant->modelVariant, $product_variant);
+                            if($product_variant->modelVariant->title == 'Color'){
+                                $input['product_variant_one'] = $product_variant->id;
+                            } else if($product_variant->modelVariant->title == 'Size'){
+                                $input['product_variant_two'] = $product_variant->id;
+                            } else if($product_variant->modelVariant->title == 'Style'){
+                                $input['product_variant_three'] = $product_variant->id;
+                            }
                         }
                     }
                 }
+                $input['product_id'] = $product->id;
             }
             $input['price'] = $variant_price['price'];
             $input['stock'] = $variant_price['stock'];
-            $input['product_id'] = $product->id;
-            ProductVariantPrice::create($input);
-            // dd($variant_price, $variant_names, $vars);
 
-            
-            // isset($variant['id']) ? ProductVariant::where('id', $variant['id'])->update($input) : ProductVariant::create($input);
+            if($method == 'create') ProductVariantPrice::create($input);
+            else{
+                // dd($variant_price);
+                $product_variant_price = ProductVariantPrice::find($variant_price['id']);
+                $product_variant_price->fill($input)->update();
+            }
         }
     }
 }

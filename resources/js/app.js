@@ -20,6 +20,7 @@ window.Vue = require('vue');
 // files.keys().map(key => Vue.component(key.split('/').pop().split('.')[0], files(key).default))
 
 Vue.component('create-product', require('./components/CreateProduct.vue').default);
+Vue.component('edit-product', require('./components/EditProduct.vue').default);
 
 /**
  * Next, we will create a fresh Vue application instance and attach it to
@@ -27,6 +28,9 @@ Vue.component('create-product', require('./components/CreateProduct.vue').defaul
  * or customize the JavaScript scaffolding to fit your unique needs.
  */
 
+import router from './router.js'
+console.log('App router:', router, router.app);
 const app = new Vue({
     el: '#app',
+    router
 });

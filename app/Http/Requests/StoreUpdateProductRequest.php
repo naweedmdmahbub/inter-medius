@@ -23,6 +23,18 @@ class StoreUpdateProductRequest extends FormRequest
      */
     public function rules()
     {
+        // dd($this->getMethod());
+        // if ($this->getMethod() == 'POST') {
+        //     $rules = [
+        //         'title' => 'required|unique:products,title',
+        //         'sku' => 'required'
+        //     ];
+        // }else{
+        //     $rules = [
+        //         'title' => 'required',
+        //         'sku' => 'required',
+        //     ];
+        // }
         return [
             'title' => 'required',
             'sku' => 'required',

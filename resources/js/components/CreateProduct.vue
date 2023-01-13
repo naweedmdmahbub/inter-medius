@@ -1,6 +1,7 @@
 <template>
     <div>
-        <form-component mood="create" :variants="variants" />
+        <form-component :mode="mode" :variants="variants" />
+        <!-- <form-component :mode="mode" :variants="variants" :product="product" /> -->
     </div>
 </template>
 
@@ -22,13 +23,41 @@ export default {
     },
     data() {
         return {
+            // product: {
+            //     id: null,
+            //     sku: '',
+            //     title: '',
+            //     description: '',
+            //     product_variants: [{
+            //         id: null,
+            //         product_id: null,
+            //         variant_id: null,
+            //         variant: '',
+            //     }],
+            //     product_variants_prices: [{
+            //         id: null,
+            //         product_id: null,
+            //         product_variant_one: null,
+            //         product_variant_two: null,
+            //         product_variant_three: null,
+            //         price: 0,
+            //         stock: 0,
+            //     }],
+            //     deletedOrderDetailIDs: []
+            // },
+            // variants: [{
+            //     id: null,
+            //     title: '',
+            //     description: '',
+            // }],
+            mode: 'create'
         }
     },
     methods: {
 
     },
     mounted() {
-        console.log('Component mounted.')
+        console.log('Create Component mounted.')
     }
 }
 </script>

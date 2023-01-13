@@ -6,15 +6,15 @@
                     <div class="card-body">
                         <div class="form-group">
                             <label for="">Product Name</label>
-                            <input type="text" v-model="product_name" placeholder="Product Name" class="form-control">
+                            <input type="text" v-model="product.title" placeholder="Product Name" class="form-control">
                         </div>
                         <div class="form-group">
                             <label for="">Product SKU</label>
-                            <input type="text" v-model="product_sku" placeholder="Product Name" class="form-control">
+                            <input type="text" v-model="product.sku" placeholder="Product Name" class="form-control">
                         </div>
                         <div class="form-group">
                             <label for="">Description</label>
-                            <textarea v-model="description" id="" cols="30" rows="4" class="form-control"></textarea>
+                            <textarea v-model="product.description" id="" cols="30" rows="4" class="form-control"></textarea>
                         </div>
                     </div>
                 </div>
@@ -35,11 +35,11 @@
                         <h6 class="m-0 font-weight-bold text-primary">Variants</h6>
                     </div>
                     <div class="card-body">
-                        <div class="row" v-for="(product_variant_item,index) in product_variant" :key="index">
+                        <div class="row" v-for="(item,index) in product_variant" :key="index">
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label for="">Option</label>
-                                    <select v-model="product_variant_item.option" class="form-control">
+                                    <select v-model="item.option" class="form-control">
                                         <option v-for="variant in variants"
                                                 :value="variant.id"
                                                 :key="variant.id">
@@ -54,7 +54,7 @@
                                            class="float-right text-primary"
                                            style="cursor: pointer;">Remove</label>
                                     <label v-else for="">.</label>
-                                    <input-tag v-model="product_variant_item.tags" @input="checkVariant" class="form-control"></input-tag>
+                                    <input-tag v-model="item.tags" @input="checkVariant" class="form-control"></input-tag>
                                 </div>
                             </div>
                         </div>
@@ -92,8 +92,7 @@
             </div>
         </div>
 
-        <button @click="saveProduct" type="submit" v-if="mode === 'create'" class="btn btn-lg btn-primary">Save</button>
-        <button @click="saveProduct" type="submit" v-if="mode === 'edit'" class="btn btn-lg btn-primary">Update</button>
+        <button @click="saveProduct" type="submit" class="btn btn-lg btn-primary">Save</button>
         <button type="button" class="btn btn-secondary btn-lg">Cancel</button>
     </section>
 </template>
@@ -116,12 +115,13 @@ export default {
         mode: {
             required: true
         },
-        responseData: {
-        }
+        product: {
+            type: Object
+        },
+        // mode: 'mode',
     },
     data() {
         return {
-            product_id: null,
             product_name: '',
             product_sku: '',
             description: '',
@@ -133,7 +133,6 @@ export default {
                 }
             ],
             product_variant_prices: [],
-            del_variant_prices_ids: [],
             dropzoneOptions: {
                 url: 'https://httpbin.org/post',
                 thumbnailWidth: 150,
@@ -155,49 +154,29 @@ export default {
                 option: available_variants[0],
                 tags: []
             })
-            console.log('this.product_variant:', this.product_variant);
+            // this.product_variants.push({
+            //     option: available_variants[0],
+            //     tags: []
+            // })
+
+            console.log('this.product_variant:', this.product_variant, all_variants, available_variants);
         },
 
         // check the variant and render all the combination
         checkVariant() {
-            if(this.mode == 'create'){
-                let tags = [];
-                this.product_variant_prices = [];
-                this.product_variant.filter((item) => {
-                    tags.push(item.tags);
+            let tags = [];
+            this.product_variant_prices = [];
+            this.product_variant.filter((item) => {
+                tags.push(item.tags);
+            })
+
+            this.getCombn(tags).forEach(item => {
+                this.product_variant_prices.push({
+                    title: item,
+                    price: 0,
+                    stock: 0
                 })
-                console.log('tags in checkVariant', tags, this);
-                this.getCombn(tags).forEach(item => {
-                    console.log('tag:', item);
-                    this.product_variant_prices.push({
-                        title: item,
-                        price: 0,
-                        stock: 0
-                    })
-                })
-            } else {
-                let tags = [];
-                this.product_variant.filter((item) => {
-                    tags.push(item.tags);
-                })
-                
-                this.del_variant_prices_ids = this.product_variant_prices.map(a => a.id);
-                let temp_product_variant_prices = [];
-                this.getCombn(tags).forEach(item => {
-                    console.log('tag:', item);
-                    var pro = this.product_variant_prices.find(p => p.title == item);
-                    temp_product_variant_prices.push(pro);
-                    let index = this.del_variant_prices_ids.indexOf(pro.id);
-                    this.del_variant_prices_ids.splice(index, 1);
-                });
-                let temp_ids = temp_product_variant_prices.map(a => a.id);
-                
-                this.product_variant_prices = temp_product_variant_prices;
-                console.log('checkVariant:', this.product_variant_prices, tags);
-                // console.log('temp_product_variant_prices:', temp_product_variant_prices);
-                // console.log('temp_ids:', temp_ids);
-                console.log('del_variant_prices_ids:', this.del_variant_prices_ids);
-            }
+            })
         },
 
         // combination algorithm
@@ -207,9 +186,7 @@ export default {
                 return pre;
             }
             let self = this;
-            // console.log('getCombn:', arr, pre,self)
             let ans = arr[0].reduce(function (ans, value) {
-                // console.log('ans:', ans);
                 return ans.concat(self.getCombn(arr.slice(1), pre + value + '/'));
             }, []);
             return ans;
@@ -218,63 +195,27 @@ export default {
         // store product into database
         saveProduct() {
             let product = {
-                id: this.product_id,
                 title: this.product_name,
                 sku: this.product_sku,
                 description: this.description,
                 product_image: this.images,
                 product_variant: this.product_variant,
-                product_variant_prices: this.product_variant_prices,
-                del_variant_prices_ids: this.del_variant_prices_ids
+                product_variant_prices: this.product_variant_prices
             }
 
-            if(this.mode == 'create'){
-                axios.post('/product', product).then(response => {
-                            console.log(response.data);
-                        }).catch(error => {
-                            console.log(error);
-                        })
-            } else {
-                axios.put('/product/'+product.id, product).then(response => {
-                            console.log(response.data);
-                        }).catch(error => {
-                            console.log(error);
-                        })
-            }
+
+            axios.post('/product', product).then(response => {
+                console.log(response.data);
+            }).catch(error => {
+                console.log(error);
+            })
 
             console.log(product);
-        },
-
-
-        calculateResponse(){
-            this.product_name = this.responseData.title;
-            this.product_id = this.responseData.id;
-            this.product_sku = this.responseData.sku;
-            this.description = this.responseData.description;
-            this.product_variant = [];
-            
-            this.variants.forEach(variant_element =>{
-                var obj = {
-                    option: variant_element.id,
-                    tags: []
-                }
-                this.product_variant.push(obj);
-            });
-            console.log('product_variant after assigning options:' ,this.product_variant);
-            this.responseData.product_variants.forEach(element => {
-                var item =  this.product_variant.find( p => p.option == element.variant_id);
-                // console.log('element',  element, item);
-                item.tags.push(element.variant);
-            });
-            this.product_variant_prices = this.responseData.product_variant_prices;
-            console.log('product_variant_prices in calculateResponse:', this.product_variant_prices);
         }
+
     },
-    async mounted() {
-        if(this.mode == 'edit'){
-            await this.calculateResponse();
-        }
-        console.log('Form Component mounted. Mode: ', this.mode);
+    mounted() {
+        console.log('Component mounted.')
     }
 }
 </script>
