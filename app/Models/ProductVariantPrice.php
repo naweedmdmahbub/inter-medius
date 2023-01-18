@@ -12,13 +12,13 @@ class ProductVariantPrice extends Model
 
 
     public function productVariantOne(){
-        return $this->belongsTo(ProductVariant::class, 'product_variant_one');
+        return $this->belongsTo(ProductVariant::class, 'product_variant_one')->withDefault();
     }
     public function productVariantTwo(){
-      return $this->belongsTo(ProductVariant::class, 'product_variant_two');
+      return $this->belongsTo(ProductVariant::class, 'product_variant_two')->withDefault();
     }
     public function productVariantThree(){
-      return $this->belongsTo(ProductVariant::class, 'product_variant_three');
+      return $this->belongsTo(ProductVariant::class, 'product_variant_three')->withDefault();
     }
 
 }

@@ -5,7 +5,7 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <h1 class="h3 mb-0 text-gray-800">Products</h1>
     </div>
-
+    {{-- @php dd($distincts, 'distincts');    @endphp --}}
 
     <div class="card">
         <form action="{{ route('product.filter')}}" method="post" class="card-header">
@@ -17,10 +17,12 @@
                 <div class="col-md-2">
                     <select name="variant" id="" class="form-control" placeholder="Select a Variant">
                             <option value="">Selec a Variant</option>
-                            @foreach ($distincts as $key => $value)
-                                <option disabled value="">{{$key}}</option>                    
-                                @foreach ($value as $item)
-                                    <option value="{{$item}}"> --   {{$item}}</option>                    
+                            @foreach ($distincts as $groupKey => $group)
+                                {{-- @php dd($groupKey, $group, $group[0]->title, 'groupKey & group');    @endphp --}}
+                                <option disabled>{{ $group[0]->title }}</option>
+                                @foreach ($group as $key => $item)
+                                    {{-- @php dd($item, $item->title, $item->variant, 'key & value');    @endphp --}}
+                                    <option value="{{$item->variant}}"> --   {{$item->variant}}</option>
                                 @endforeach
                             @endforeach
                     </select>

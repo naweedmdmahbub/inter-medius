@@ -31,7 +31,7 @@ class ProductController extends Controller
         $products = Product::with('productVariantPrices.productVariantOne',
                                     'productVariantPrices.productVariantTwo',
                                     'productVariantPrices.productVariantThree')
-                            ->paginate(2);
+                            ->paginate(10);
         $total = Product::count();
         $variants = Variant::with('productVariants')->get();
 
@@ -40,15 +40,10 @@ class ProductController extends Controller
                              'product_variants.variant_id', 'variants.title')
                         ->leftJoin('variants', 'product_variants.variant_id', '=', 'variants.id')
                         ->get()
-                        ->unique('variant');
-        // $distinctVariants = DB::table('product_variants')->distinct('variant')->pluck('id', 'variant')->flip();
-        $distincts = [];
-        foreach ($distinctVariants as $key => $value) {
-            $distincts[$value->title] = [];
-        }
-        foreach ($distinctVariants as $key => $value) {
-            array_push($distincts[$value->title], $value->variant);
-        }
+                        ->unique('variant')
+                        ->groupBy('variant_id');
+        // dd($distinctVariants);
+        $distincts = $distinctVariants;
         $variants = Variant::with('productVariants')->get();
         // dd($distinctVariants, $distincts);
         return view('products.index', compact('products', 'total', 'variants', 'distincts'));
@@ -151,7 +146,6 @@ class ProductController extends Controller
         $price_from = $request['price_from'];
         $price_to = $request['price_to'];
         $date = $request['date'];
-
         $query = Product::query();
         if($title){
             $query = $query->where('title', 'like', '%' .$title . '%');
@@ -159,42 +153,29 @@ class ProductController extends Controller
         if($date){            
             $query = $query->whereDate('created_at', $date);
         }
-        if($price_from || $price_to){
-            if($price_from && $price_from){
-                // $query = $query->whereHas('productVariantPrices',function($subquery) use ($price_from, $price_to){
-                //     $subquery->whereBetween('price',[$price_from, $price_to]);
-                // });
-                $query = $query->with(['productVariantPrices'=>function($subquery) use ($price_from, $price_to){
+        $query->with(['productVariantPrices' => function($subquery) use ($price_from, $price_to, $variant){
+            if($price_from || $price_to){
+                if($price_from && $price_to){
                     $subquery->whereBetween('price',[$price_from, $price_to]);
-                }]);
-            } else if($price_from){
-                // $query = $query->whereHas(['productVariantPrices',function($subquery) use ($price_from){
-                //     $subquery->where('price','>=', $price_from);
-                // }]);
-                $query = $query->with(['productVariantPrices'=>function($subquery) use ($price_from){
+                } else if($price_from){
                     $subquery->where('price','>=', $price_from);
-                }]);
-            } else{
-                // $query = $query->whereHas(['productVariantPrices'=>function($subquery) use ($price_to){
-                //     $subquery->where('price','<=', $price_to);
-                // }]);
-                $query = $query->with(['productVariantPrices'=>function($subquery) use ($price_to){
+                } else{
                     $subquery->where('price','<=', $price_to);
-                }]);
+                }
             }
-        }
-        if($variant){
-            $query = $query->whereHas('productVariantPrices',function ($subquery) use($variant) {
-                        $subquery->whereHas('productVariantOne', function($nestedquery) use($variant) {
-                                    $nestedquery->where('variant', $variant);
-                                })->orWhereHas('productVariantTwo', function($nestedquery) use($variant) {
-                                    $nestedquery->where('variant', $variant);
-                                })->orWhereHas('productVariantThree', function($nestedquery) use($variant) {
-                                    $nestedquery->where('variant', $variant);
-                                });
-                    });
-        }
-        $products = $query->paginate(2);
+
+            if($variant){
+                $subquery->whereHas('productVariantOne', function($nestedquery) use($variant) {
+                            $nestedquery->where('variant', $variant);
+                        })->orWhereHas('productVariantTwo', function($nestedquery) use($variant) {
+                            $nestedquery->where('variant', $variant);
+                        })->orWhereHas('productVariantThree', function($nestedquery) use($variant) {
+                            $nestedquery->where('variant', $variant);
+                        });
+            }
+        }]);
+
+        $products = $query->paginate(10);
         // dd($query, $request->all());
         // dd($products);
         $distinctVariants = DB::table('product_variants')
@@ -202,14 +183,10 @@ class ProductController extends Controller
                              'product_variants.variant_id', 'variants.title')
                         ->leftJoin('variants', 'product_variants.variant_id', '=', 'variants.id')
                         ->get()
-                        ->unique('variant');
-        $distincts = [];
-        foreach ($distinctVariants as $key => $value) {
-            $distincts[$value->title] = [];
-        }
-        foreach ($distinctVariants as $key => $value) {
-            array_push($distincts[$value->title], $value->variant);
-        }
+                        ->unique('variant')
+                        ->groupBy('variant_id');
+
+        $distincts = $distinctVariants;
         $total = Product::count();
         return view('products.index', compact('products', 'total', 'distincts'));
     }
