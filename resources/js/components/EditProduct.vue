@@ -31,9 +31,7 @@ export default {
             mode: 'edit',
         }
     },
-    methods: {
-
-    },
+    methods: {},
     async mounted() {
         console.log('product:',this.product);
         await axios.get('/product/'+this.product.id).then(response => {
